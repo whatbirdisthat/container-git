@@ -8,7 +8,7 @@ you've got hard-coded in your laptop's `~/.ssh/config` and etc.
 > So you spin up a little _gitainer_ and change the username,
 add a `id_rsa` and we're good.
 
-> What it doesn't do *yet* is `gpg` signing etc
+> What it doesn't do *yet* is `gpg` signing
 
 To make this thing work, try:
 
