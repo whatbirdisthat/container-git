@@ -82,7 +82,7 @@ docker run -it --rm                                                            \
 -v $(GIT_CREDENTIALS_LOCATION):/home/$(LOGIN)/.git-credentials                 \
 -v `pwd`:`pwd`                                                                 \
 -w `pwd`                                                                       \
--h $(SERVICE_NAME).local                                                               \
+-h $(SERVICE_NAME).local                                                       \
 $(CONTAINER_NAME)
 endef
 
