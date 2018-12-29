@@ -1,6 +1,11 @@
 item = git
-repo = tqxr
-base_image = $(repo)/alpine-$(item)-base
+repo = tqxridentity
+
+ifndef DISTRO
+DISTRO = centos
+endif
+
+base_image = $(repo)/$(DISTRO)-$(item)-base
 binloc = ${HOME}/bin/
 executable_name =$(item)-$(LOGIN)-$(SERVICE_NAME)
 
@@ -13,27 +18,30 @@ GIT_CREDENTIALS_LOCATION:=/dev/null
 endif
 
 ifndef DOCKERFILE
-DOCKERFILE:=Dockerfile
+DOCKERFILE:=$(DISTRO).Dockerfile
 endif
 
-ALPINE_UPDATED:=Downloaded newer image for alpine:latest
+DISTRO_UPDATED:=Downloaded newer image for $(DISTRO):latest
 LABEL_FILTER:=label=git-user-identity
 
+# clean:
+# 	docker rmi $(base_image)
+
 check:
-	cd imagedefs/base && docker run --rm -i hadolint/hadolint < Dockerfile
-	cd imagedefs/user && docker run --rm -i hadolint/hadolint < Dockerfile
+	cd imagedefs/base && docker run --rm -i hadolint/hadolint < $(DOCKERFILE)
+	cd imagedefs/user && docker run --rm -i hadolint/hadolint < $(DOCKERFILE)
 
 # --squash (experimental for now)
 
 check-build-base-image:
 	@{                                                                           \
 	docker images | grep -q '$(base_image)' && exit 0 ;                          \
-	docker pull alpine:latest | grep -vq '$(ALPINE_UPDATED)' || exit 0 ;         \
+	docker pull $(DISTRO):latest | grep -vq '$(DISTRO_UPDATED)' || exit 0 ;      \
 	echo "Building BASE image '$(base_image)'";                                  \
 	cd imagedefs/base &&                                                         \
 	docker build                                                                 \
-	--rm \
-	--label "git-base-image"                                                     \
+	--rm --file $(DOCKERFILE)                                                    \
+	--label "tqxr-git-base-image"                                                \
 	-t $(base_image) . ;                                                         \
 	}
 
@@ -42,7 +50,7 @@ build-user-image:
 	docker images | grep -q '$(CONTAINER_NAME)' && exit 0 ;                      \
 	echo "*** BUILDING $(CONTAINER_NAME) IMAGE ***" &&                           \
 	cd imagedefs/user &&                                                         \
-	docker build --rm -t $(CONTAINER_NAME)                              \
+	docker build --rm -t $(CONTAINER_NAME)                                       \
 	--label "git-user-identity"                                                  \
 	--file "$(DOCKERFILE)"                                                       \
 	--build-arg BASEIMAGE=$(base_image)                                          \
@@ -80,13 +88,14 @@ define RUN_COMMAND
 docker run -it --rm                                                            \
 -v $(PRIVATE_KEY_LOCATION):/home/$(LOGIN)/.ssh/id_rsa                          \
 -v $(GIT_CREDENTIALS_LOCATION):/home/$(LOGIN)/.git-credentials                 \
--v `pwd`:`pwd`                                                                 \
--w `pwd`                                                                       \
+-v $${PWD}:$${PWD}                                                             \
+-w $${PWD}                                                                     \
 -h $(SERVICE_NAME).local                                                       \
 $(CONTAINER_NAME)
 endef
 
 export RUN_COMMAND
+
 build-container-command: check-user-image-variables build-user-image
 	@echo "$$RUN_COMMAND" > "$(binloc)$(executable_name)"
 	@chmod u+x "$(binloc)$(executable_name)"
@@ -125,36 +134,36 @@ Examples:
 1.
 Simple git container using bare minimums
 
-  LOGIN=loginusername                                   \
-	SERVICE_NAME='github'                                 \
-	GIT_USERNAME='Friendly Name For Commits'              \
-	GIT_EMAIL='email@address.tld'                         \
+  	LOGIN=loginusername                                    $\\
+	SERVICE_NAME='github'                                  $\\
+	GIT_USERNAME='Friendly Name For Commits'               $\\
+	GIT_EMAIL='email@address.tld'                          $\\
 	make install
 
 The above will create an image called git-loginusername and put an executable
 script into /usr/local/bin/git-loginusername which will fire up a container in
-$PWD, bind-mounting the private key `$HOME/.ssh/id_rsa`.
+$$PWD, bind-mounting the private key `$$HOME/.ssh/id_rsa`.
 
 2.
 To use another key, set PRIVATE_KEY_LOCATION on the command line:
 
-  LOGIN=loginusername                                   \
-	SERVICE_NAME='github'                                 \
-  GIT_USERNAME='Friendly Name For Commits'              \
-  GIT_EMAIL='email@address.tld'                         \
-  PRIVATE_KEY_LOCATION=$HOME/.ssh/my-key.key            \
-  make install
+  	LOGIN=loginusername                                    $\\
+	SERVICE_NAME='github'                                  $\\
+  	GIT_USERNAME='Friendly Name For Commits'               $\\
+  	GIT_EMAIL='email@address.tld'                          $\\
+  	PRIVATE_KEY_LOCATION=$$HOME/.ssh/my-key.key             $\\
+  	make install
 
 
 3.
 For HTTPS based authentication set GIT_CREDENTIALS_LOCATION on the command line.
 
-  LOGIN=login                                            \
-	SERVICE_NAME='github'                                 \
-	GIT_USERNAME="Friendly Login Name"                     \
-	GIT_EMAIL='hidden-email@users.noreply.github.com'      \
-	PRIVATE_KEY_LOCATION=$HOME/.ssh/github.key             \
-	GIT_CREDENTIALS_LOCATION=~/.github-git-credentials     \
+	LOGIN=login                                            $\\
+	SERVICE_NAME='github'                                  $\\
+	GIT_USERNAME="Friendly Login Name"                     $\\
+	GIT_EMAIL='hidden-email@users.noreply.github.com'      $\\
+	PRIVATE_KEY_LOCATION=$$HOME/.ssh/github.key             $\\
+	GIT_CREDENTIALS_LOCATION=~/.github-git-credentials     $\\
 	make install
 
 4.
@@ -162,13 +171,13 @@ You might want to use a different Dockerfile for the user build (say, your org
 has a bunch of certificates that need to be added) - this can be accomplished
 using the DOCKERFILE env var eg: dockerfile in imagedefs/user/Dockerfile-custom
 
-  LOGIN=login                                            \
-	SERVICE_NAME='github'                                 \
-	GIT_USERNAME="Friendly Login Name"                     \
-	GIT_EMAIL='hidden-email@users.noreply.github.com'      \
-	PRIVATE_KEY_LOCATION=$HOME/.ssh/github.key             \
-	GIT_CREDENTIALS_LOCATION=~/.github-git-credentials     \
-	DOCKERFILE=Dockerfile-custom                           \
+  	LOGIN=login                                            $\\
+	SERVICE_NAME='github'                                  $\\
+	GIT_USERNAME="Friendly Login Name"                     $\\
+	GIT_EMAIL='hidden-email@users.noreply.github.com'      $\\
+	PRIVATE_KEY_LOCATION=$$HOME/.ssh/github.key             $\\
+	GIT_CREDENTIALS_LOCATION=~/.github-git-credentials     $\\
+	DOCKERFILE=Dockerfile-custom                           $\\
 	make install
 
 endef

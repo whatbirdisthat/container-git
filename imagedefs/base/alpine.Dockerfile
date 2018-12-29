@@ -1,8 +1,11 @@
 FROM alpine:latest
 
-RUN apk add --no-cache bash less tree \
+RUN apk add --no-cache \
+  bash less tree coreutils \
   git git-doc git-bash-completion \
-  openssh-client
+  openssh-client \
+  readline readline-doc \
+  make
 
 WORKDIR /
 
