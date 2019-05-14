@@ -3,8 +3,11 @@ export CLICOLOR=1
 
 alias tree='tree -C'
 
-GIT_PS1_SHOWCOLORHINTS=1
 GIT_PS1_SHOWDIRTYSTATE=1
+GIT_PS1_SHOWUNTRACKEDFILES=1
+GIT_PS1_SHOWUPSTREAM="auto"
+GIT_PS1_SHOWCOLORHINTS=1
+GIT_PS1_HIDE_IF_PWD_IGNORED=1
 
 source /usr/share/bash-completion/completions/git
 source /usr/local/sbin/git-prompt.sh
