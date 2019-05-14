@@ -3,6 +3,7 @@ repo = tqxr
 base_image = $(repo)/alpine-$(item)-base
 binloc = ${HOME}/bin/
 executable_name =$(item)-$(LOGIN)-$(SERVICE_NAME)
+login_uid = `id -u`
 
 ifndef CONTAINER_NAME
 CONTAINER_NAME:=$(repo)/$(item)-$(LOGIN)-$(SERVICE_NAME)
@@ -32,7 +33,7 @@ check-build-base-image:
 	echo "Building BASE image '$(base_image)'";                                  \
 	cd imagedefs/base &&                                                         \
 	docker build                                                                 \
-	--rm \
+	--rm                                                                         \
 	--label "git-base-image"                                                     \
 	-t $(base_image) . ;                                                         \
 	}
@@ -42,10 +43,11 @@ build-user-image:
 	docker images | grep -q '$(CONTAINER_NAME)' && exit 0 ;                      \
 	echo "*** BUILDING $(CONTAINER_NAME) IMAGE ***" &&                           \
 	cd imagedefs/user &&                                                         \
-	docker build --rm -t $(CONTAINER_NAME)                              \
+	docker build --rm -t $(CONTAINER_NAME)                                       \
 	--label "git-user-identity"                                                  \
 	--file "$(DOCKERFILE)"                                                       \
 	--build-arg BASEIMAGE=$(base_image)                                          \
+	--build-arg LOGIN_ID="$(login_uid)"                                          \
 	--build-arg LOGIN="$(LOGIN)"                                                 \
 	--build-arg GIT_USERNAME="$(GIT_USERNAME)"                                   \
 	--build-arg GIT_EMAIL="$(GIT_EMAIL)"                                         \
@@ -178,4 +180,4 @@ help:
 	$(info $(HELP_TEXT))
 	@:
 
-.PHONY: all clean help
+.PHONY: all clean help build
