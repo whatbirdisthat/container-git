@@ -7,8 +7,8 @@ RUN apk add --no-cache bash less tree \
 WORKDIR /
 
 RUN addgroup -g 1001 git
-ADD https://raw.github.com/petervanderdoes/gitflow-avh/develop/contrib/gitflow-installer.sh .
-RUN sh gitflow-installer.sh install stable; rm gitflow-installer.sh
+#ADD https://raw.github.com/petervanderdoes/gitflow-avh/develop/contrib/gitflow-installer.sh .
+#RUN sh gitflow-installer.sh install stable; rm gitflow-installer.sh
 
 ADD https://raw.githubusercontent.com/git/git/master/contrib/completion/git-prompt.sh /usr/local/sbin/git-prompt.sh
 RUN chgrp git /usr/local/sbin/git-prompt.sh
