@@ -1,13 +1,15 @@
 ARG BASEIMAGE=wbit/alpine-git-base
 FROM ${BASEIMAGE}
 
+ARG LOGIN_UID=1000
+
 WORKDIR /
 
 ARG LOGIN=nobody
 ARG GIT_USERNAME="Username is nobody"
 ARG GIT_EMAIL="nobody@localhost"
 
-RUN adduser -D -g '' ${LOGIN}
+RUN adduser -D --uid ${LOGIN_UID} -g '' ${LOGIN}
 RUN addgroup ${LOGIN} git
 
 WORKDIR /home/${LOGIN}
