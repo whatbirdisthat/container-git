@@ -17,10 +17,24 @@ RUN chmod ug+rx /usr/local/sbin/git-prompt.sh
 RUN mkdir -p /etc/ssh
 WORKDIR /etc/ssh
 
-RUN ssh-keyscan -t rsa github.com >>known_hosts
-RUN nslookup github.com | grep ^Address | awk '{print $3}' | xargs -n1 ssh-keyscan -t rsa >>known_hosts
-RUN ssh-keyscan -t rsa bitbucket.org >>known_hosts
-RUN nslookup bitbucket.org | grep ^Address | awk '{print $3}' | xargs -n1 ssh-keyscan -t rsa >>known_hosts
+
+
+RUN \
+    domains="github.com bitbucket.org ssh.dev.azure.com" ;                                                 \
+    for domain in $domains ; do                                                                            \
+      echo "The domain is: $domain" ;                                                                      \
+      ssh-keyscan -t rsa $domain >>known_hosts ;                                                           \
+      nslookup $domain | grep ^Address | awk '{print $3}' | xargs -n1 ssh-keyscan -t rsa >>known_hosts ;   \
+    done
+
+#RUN exit 1
+
+#RUN ssh-keyscan -t rsa github.com >>known_hosts
+#RUN nslookup github.com | grep ^Address | awk '{print $3}' | xargs -n1 ssh-keyscan -t rsa >>known_hosts
+#RUN ssh-keyscan -t rsa bitbucket.org >>known_hosts
+#RUN nslookup bitbucket.org | grep ^Address | awk '{print $3}' | xargs -n1 ssh-keyscan -t rsa >>known_hosts
+#RUN ssh-keyscan -t rsa ssh.dev.azure.com >>known_hosts
+#RUN nslookup ssh.dev.azure.com | grep ^Address | awk '{print $3}' | xargs -n1 ssh-keyscan -t rsa >>known_hosts
 
 RUN chgrp git known_hosts
 RUN chmod ug+r known_hosts
