@@ -19,7 +19,7 @@ ADD assets/.gitexcludes .
 RUN mkdir /home/${LOGIN}/.ssh
 WORKDIR /home/${LOGIN}/.ssh
 RUN cat /etc/ssh/known_hosts > /home/${LOGIN}/.ssh/known_hosts
-RUN chmod 0400 /home/${LOGIN}/.ssh/known_hosts
+RUN chmod 0600 /home/${LOGIN}/.ssh/known_hosts
 
 WORKDIR /home/${LOGIN}
 RUN chown -R ${LOGIN} /home/${LOGIN}
