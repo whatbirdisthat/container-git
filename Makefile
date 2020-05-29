@@ -1,7 +1,7 @@
 item = git
 repo = tqxr
-base_image = $(repo)/alpine-$(item)-base
-binloc = ${HOME}/bin/
+base_image = $(repo)/tqxr-$(item)-base
+binloc = ${HOME}/.local/bin/
 executable_name =$(item)-$(LOGIN)-$(SERVICE_NAME)
 login_uid = `id -u`
 
@@ -17,7 +17,7 @@ ifndef DOCKERFILE
 DOCKERFILE:=Dockerfile
 endif
 
-ALPINE_UPDATED:=Downloaded newer image for alpine:latest
+OS_UPDATED:=Downloaded newer image for
 LABEL_FILTER:=label=git-user-identity
 
 check:
@@ -29,7 +29,7 @@ check:
 check-build-base-image:
 	@{                                                                           \
 	docker images | grep -q '$(base_image)' && exit 0 ;                          \
-	docker pull alpine:latest | grep -vq '$(ALPINE_UPDATED)' || exit 0 ;         \
+	docker pull alpine:latest | grep -vq '$(OS_UPDATED)' || exit 0 ;         \
 	echo "Building BASE image '$(base_image)'";                                  \
 	cd imagedefs/base &&                                                         \
 	docker build                                                                 \

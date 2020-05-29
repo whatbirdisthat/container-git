@@ -1,4 +1,4 @@
-ARG BASEIMAGE=wbit/alpine-git-base
+ARG BASEIMAGE=wbit/tqxr-git-base
 FROM ${BASEIMAGE}
 
 ARG LOGIN_UID=1000
@@ -9,8 +9,8 @@ ARG LOGIN=nobody
 ARG GIT_USERNAME="Username is nobody"
 ARG GIT_EMAIL="nobody@localhost"
 
-RUN adduser -D --uid ${LOGIN_UID} -g '' ${LOGIN}
-RUN addgroup ${LOGIN} git
+RUN useradd --uid ${LOGIN_UID} ${LOGIN}
+RUN usermod -aG git ${LOGIN}
 
 WORKDIR /home/${LOGIN}
 ADD assets/.bashrc .
