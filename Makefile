@@ -17,6 +17,14 @@ ifndef DOCKERFILE
 DOCKERFILE:=Dockerfile
 endif
 
+ifndef PUBLIC_KEY_LOCATION
+PUBLIC_KEY_LOCATION:=~/.ssh/id_rsa.pub
+endif
+
+ifndef PRIVATE_KEY_LOCATION
+PRIVATE_KEY_LOCATION:=~/.ssh/id_rsa
+endif
+
 OS_UPDATED:=Downloaded newer image for
 LABEL_FILTER:=label=git-user-identity
 
@@ -29,7 +37,7 @@ check:
 check-build-base-image:
 	@{                                                                           \
 	docker images | grep -q '$(base_image)' && exit 0 ;                          \
-	docker pull alpine:latest | grep -vq '$(OS_UPDATED)' || exit 0 ;         \
+	docker pull archlinux/base:latest | grep -vq '$(OS_UPDATED)' || exit 0 ;     \
 	echo "Building BASE image '$(base_image)'";                                  \
 	cd imagedefs/base &&                                                         \
 	docker build                                                                 \
@@ -81,6 +89,7 @@ define RUN_COMMAND
 #!/bin/bash
 docker run -it --rm                                                            \
 -v $(PRIVATE_KEY_LOCATION):/home/$(LOGIN)/.ssh/id_rsa                          \
+-v $(PUBLIC_KEY_LOCATION):/home/$(LOGIN)/.ssh/id_rsa.pub                       \
 -v $(GIT_CREDENTIALS_LOCATION):/home/$(LOGIN)/.git-credentials                 \
 -v `pwd`:`pwd`                                                                 \
 -w `pwd`                                                                       \
@@ -141,7 +150,7 @@ $PWD, bind-mounting the private key `$HOME/.ssh/id_rsa`.
 To use another key, set PRIVATE_KEY_LOCATION on the command line:
 
   LOGIN=loginusername                                   \
-	SERVICE_NAME='github'                                 \
+  SERVICE_NAME='github'                                 \
   GIT_USERNAME='Friendly Name For Commits'              \
   GIT_EMAIL='email@address.tld'                         \
   PRIVATE_KEY_LOCATION=$HOME/.ssh/my-key.key            \
