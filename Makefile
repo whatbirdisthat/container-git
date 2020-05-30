@@ -3,6 +3,7 @@ repo = tqxridentity
 
 ifndef DISTRO
 DISTRO = centos
+#DISTRO = archlinux
 endif
 
 base_image = $(repo)/$(DISTRO)-$(item)-base
@@ -21,17 +22,24 @@ ifndef DOCKERFILE
 DOCKERFILE:=$(DISTRO).Dockerfile
 endif
 
+ifndef PUBLIC_KEY_LOCATION
+PUBLIC_KEY_LOCATION:=~/.ssh/id_rsa.pub
+endif
+
+ifndef PRIVATE_KEY_LOCATION
+PRIVATE_KEY_LOCATION:=~/.ssh/id_rsa
+endif
+
 DISTRO_UPDATED:=Downloaded newer image for $(DISTRO):latest
 LABEL_FILTER:=label=git-user-identity
-
-# clean:
-# 	docker rmi $(base_image)
 
 check:
 	cd imagedefs/base && docker run --rm -i hadolint/hadolint < $(DOCKERFILE)
 	cd imagedefs/user && docker run --rm -i hadolint/hadolint < $(DOCKERFILE)
 
-# --squash (experimental for now)
+# for archlinux change the line below to this:
+# 	docker pull $(DISTRO)/base:latest | grep -vq '$(DISTRO_UPDATED)' || exit 0 ;      \
+
 
 check-build-base-image:
 	@{                                                                           \
@@ -60,6 +68,10 @@ build-user-image:
 	. ;                                                                          \
 	}
 
+
+remove-base-image:
+	docker rmi $(base_image)
+
 remove-user-images:
 	@{                                                                           \
 	THEREPO=$(repo) ;                                                            \
@@ -87,6 +99,7 @@ define RUN_COMMAND
 #!/bin/bash
 docker run -it --rm                                                            \
 -v $(PRIVATE_KEY_LOCATION):/home/$(LOGIN)/.ssh/id_rsa                          \
+-v $(PUBLIC_KEY_LOCATION):/home/$(LOGIN)/.ssh/id_rsa.pub                       \
 -v $(GIT_CREDENTIALS_LOCATION):/home/$(LOGIN)/.git-credentials                 \
 -v $${PWD}:$${PWD}                                                             \
 -w $${PWD}                                                                     \
@@ -109,7 +122,7 @@ build: install build-container-command
 distclean: uninstall
 	@rm -f $(binloc)$(executable_name)
 
-clean: remove-user-images
+clean: remove-user-images remove-base-image
 	@:
 
 uninstall: remove-user-images
