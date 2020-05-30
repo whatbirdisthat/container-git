@@ -7,7 +7,9 @@ DISTRO = centos
 endif
 
 base_image = $(repo)/$(DISTRO)-$(item)-base
+ifndef binloc
 binloc = ${HOME}/bin/
+endif
 executable_name =$(item)-$(LOGIN)-$(SERVICE_NAME)
 
 ifndef CONTAINER_NAME
