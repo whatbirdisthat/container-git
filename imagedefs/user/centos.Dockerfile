@@ -12,7 +12,7 @@ ENV GIT_EMAIL ${GIT_EMAIL:-'GIT EMAIL IS NOT SET'}
 WORKDIR /
 
 RUN mkdir -p \
-/newroot/lib64 \
+/newroot/lib64/tls/x86_64/x86_64/ \
 /newroot/bin \
 /newroot/etc \
 /newroot/etc/ssh \
@@ -23,18 +23,23 @@ RUN mkdir -p \
 /newroot/usr/share \
 /newroot/usr/share/terminfo/x \
 /newroot/usr/share/bash-completion/completions \
+/newroot/usr/share/i18n \
+/newroot/usr/share/i18n/charmaps \
+/newroot/usr/share/i18n/repertoiremaps \
+/newroot/usr/share/i18n/locales \
+/newroot/usr/lib/locale \
 /newroot/usr/local/sbin \
 /newroot/home
+
 
 RUN adduser -U $LOGIN
 RUN mkdir -p /home/$LOGIN/.ssh
 
 WORKDIR /usr/local/sbin
 ADD assets/git-credential-read-only .
-
+WORKDIR /
 ADD assets/.bashrc /home/$LOGIN/
 ADD assets/.gitexcludes /home/$LOGIN/
-
 ADD assets/.gitconfig /home/$LOGIN/
 RUN sed -i "s/GIT_USERNAME/${GIT_USERNAME}/" /home/$LOGIN/.gitconfig
 RUN sed -i "s/GIT_EMAIL/${GIT_EMAIL}/" /home/$LOGIN/.gitconfig
@@ -42,6 +47,16 @@ RUN sed -i "s/GIT_EMAIL/${GIT_EMAIL}/" /home/$LOGIN/.gitconfig
 RUN cp /etc/ssh/known_hosts /home/$LOGIN/.ssh/known_hosts
 
 WORKDIR /
+
+## for strace
+# RUN cp /lib64/{\
+# libdw.so.1,\
+# libelf.so.1,\
+# liblzma.so.5,\
+# } /newroot/lib64
+
+
+RUN cp /lib64/libtinfo.so.6 /newroot/lib64/tls/x86_64/x86_64/libtinfo.so.6
 
 RUN cp /lib64/{\
 ld-linux-x86-64.so.2,\
@@ -57,8 +72,6 @@ libcrypto.so,\
 libcrypto.so.1.1,\
 libcurl.so.4,\
 libdl.so.2,\
-libdw.so.1,\
-libelf.so.1,\
 libfipscheck.so.1,\
 libfreebl3.so,\
 libgcc_s.so.1,\
@@ -73,12 +86,12 @@ libkrb5.so.3,\
 libkrb5support.so.0,\
 liblber-2.4.so.2,\
 libldap-2.4.so.2,\
-liblzma.so.5,\
 libm.so.6,\
 libnspr4.so,\
 libnss3.so,\
 libnss_dns.so.2,\
 libnss_files.so.2,\
+libnss_sss.so.2,\
 libnssutil3.so,\
 libpcre.so.1,\
 libpcre2-8.so.0,\
@@ -87,35 +100,63 @@ libplds4.so,\
 libpthread.so.0,\
 libreadline.so.7,\
 libresolv.so.2,\
-librt.so.1,\
 libsasl2.so.3,\
 libselinux.so.1,\
 libsmime3.so,\
-# libssh2.so.1,\
 libssl.so,\
 libssl3.so,\
-libtinfo.so.6,\
 libutil.so.1,\
+librt.so.1,\
 libz.so.1\
 } /newroot/lib64
 
+## extended edition :)
+# RUN cp /usr/bin/{\
+# awk,\
+# curl,\
+# head,\
+# ldd,\
+# locale,\
+# man,\
+# sed,\
+# strace,\
+# tail,\
+# } /newroot/usr/bin/
+
+RUN cp /usr/bin/{\
+bash,\
+cat,\
+cmp,\
+coreutils,\
+diff,\
+git,\
+grep,\
+less,\
+ls,\
+ssh,\
+tree,\
+uniq,\
+vi,\
+whoami\
+} /newroot/usr/bin/
+
+RUN cp /bin/sh /newroot/bin/
+RUN cp /usr/share/bash-completion/completions/git /newroot/usr/share/bash-completion/completions/git
+RUN cp -r /usr/local/sbin/git-prompt.sh /newroot/usr/local/sbin/
+RUN cp -r /usr/share/git-core /newroot/usr/share/git-core
 RUN cp /etc/{nsswitch.conf,passwd,group,host.conf} /newroot/etc/
 RUN cp -r /etc/pki/ /newroot/etc/pki/
 RUN cp -r /etc/ssh/ /newroot/etc/ssh
 RUN cp -r /usr/share/terminfo/x /newroot/usr/share/terminfo/
-RUN cp /usr/bin/{bash,strace,ls,tree,less,whoami} /newroot/usr/bin/
-RUN cp /bin/sh /newroot/bin/
+RUN cp -r /usr/share/i18n/charmaps/UTF-8.gz /newroot/usr/share/i18n/charmaps/
+RUN cp -r /usr/lib/locale/en_AU.utf8 /newroot/usr/lib/locale
+RUN cp -r /usr/share/i18n/locales/en_AU /newroot/usr/share/i18n/locales/
+## locale reports this as in use but it isn't there
+# RUN cp -r /usr/share/i18n/repertoiremaps /newroot/usr/share/i18n/
 
-RUN cp /usr/share/bash-completion/completions/git \
-    /newroot/usr/share/bash-completion/completions/git
-RUN cp -r /usr/local/sbin/git-prompt.sh /newroot/usr/local/sbin/
-
-RUN cp -r /usr/share/git-core /newroot/usr/share/git-core
-RUN cp /usr/bin/git /newroot/usr/bin/
-
-RUN cp /usr/bin/{cat,grep,ldd,man,diff,cmp,tail,head,uniq} /newroot/usr/bin/
-RUN cp /usr/bin/{ssh,curl} /newroot/usr/bin/
-RUN cp /usr/bin/{awk,sed,vi} /newroot/usr/bin/
+##
+# And *this* is how to get a 100% score in `dive` :)
+##
 
 FROM scratch
 ARG LOGIN
@@ -123,5 +164,11 @@ COPY --from=0 /newroot/ /
 
 USER $LOGIN
 COPY --from=0 --chown=1000:1000 /home/$LOGIN /home/$LOGIN
+
+ENV LC_ALL=en_AU.utf8
+ENV LANG=en_AU.utf8
+ENV LANGUAGE=en_AU:en
+
+## for finding ENOENT and etc
 # CMD [ "/usr/bin/strace", "/usr/bin/bash" ]
 CMD [ "/usr/bin/bash" ]
