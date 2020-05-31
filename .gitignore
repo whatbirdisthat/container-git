@@ -1,2 +1,7 @@
-make-*.sh
 .vscode/
+
+# some utils
+make-*.sh
+run-*.sh
+remove*.sh
+
