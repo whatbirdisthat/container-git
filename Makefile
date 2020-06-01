@@ -1,8 +1,9 @@
 item = git
 repo = tqxr
-base_image = $(repo)/alpine-$(item)-base
-binloc = ${HOME}/bin/
+base_image = $(repo)/tqxr-$(item)-base
+binloc = ${HOME}/.local/bin/
 executable_name =$(item)-$(LOGIN)-$(SERVICE_NAME)
+login_uid = `id -u`
 
 ifndef CONTAINER_NAME
 CONTAINER_NAME:=$(repo)/$(item)-$(LOGIN)-$(SERVICE_NAME)
@@ -16,7 +17,15 @@ ifndef DOCKERFILE
 DOCKERFILE:=Dockerfile
 endif
 
-ALPINE_UPDATED:=Downloaded newer image for alpine:latest
+ifndef PUBLIC_KEY_LOCATION
+PUBLIC_KEY_LOCATION:=~/.ssh/id_rsa.pub
+endif
+
+ifndef PRIVATE_KEY_LOCATION
+PRIVATE_KEY_LOCATION:=~/.ssh/id_rsa
+endif
+
+OS_UPDATED:=Downloaded newer image for
 LABEL_FILTER:=label=git-user-identity
 
 check:
@@ -28,11 +37,11 @@ check:
 check-build-base-image:
 	@{                                                                           \
 	docker images | grep -q '$(base_image)' && exit 0 ;                          \
-	docker pull alpine:latest | grep -vq '$(ALPINE_UPDATED)' || exit 0 ;         \
+	docker pull archlinux/base:latest | grep -vq '$(OS_UPDATED)' || exit 0 ;     \
 	echo "Building BASE image '$(base_image)'";                                  \
 	cd imagedefs/base &&                                                         \
 	docker build                                                                 \
-	--rm \
+	--rm                                                                         \
 	--label "git-base-image"                                                     \
 	-t $(base_image) . ;                                                         \
 	}
@@ -42,10 +51,11 @@ build-user-image:
 	docker images | grep -q '$(CONTAINER_NAME)' && exit 0 ;                      \
 	echo "*** BUILDING $(CONTAINER_NAME) IMAGE ***" &&                           \
 	cd imagedefs/user &&                                                         \
-	docker build --rm -t $(CONTAINER_NAME)                              \
+	docker build --rm -t $(CONTAINER_NAME)                                       \
 	--label "git-user-identity"                                                  \
 	--file "$(DOCKERFILE)"                                                       \
 	--build-arg BASEIMAGE=$(base_image)                                          \
+	--build-arg LOGIN_ID="$(login_uid)"                                          \
 	--build-arg LOGIN="$(LOGIN)"                                                 \
 	--build-arg GIT_USERNAME="$(GIT_USERNAME)"                                   \
 	--build-arg GIT_EMAIL="$(GIT_EMAIL)"                                         \
@@ -79,6 +89,7 @@ define RUN_COMMAND
 #!/bin/bash
 docker run -it --rm                                                            \
 -v $(PRIVATE_KEY_LOCATION):/home/$(LOGIN)/.ssh/id_rsa                          \
+-v $(PUBLIC_KEY_LOCATION):/home/$(LOGIN)/.ssh/id_rsa.pub                       \
 -v $(GIT_CREDENTIALS_LOCATION):/home/$(LOGIN)/.git-credentials                 \
 -v `pwd`:`pwd`                                                                 \
 -w `pwd`                                                                       \
@@ -139,7 +150,7 @@ $PWD, bind-mounting the private key `$HOME/.ssh/id_rsa`.
 To use another key, set PRIVATE_KEY_LOCATION on the command line:
 
   LOGIN=loginusername                                   \
-	SERVICE_NAME='github'                                 \
+  SERVICE_NAME='github'                                 \
   GIT_USERNAME='Friendly Name For Commits'              \
   GIT_EMAIL='email@address.tld'                         \
   PRIVATE_KEY_LOCATION=$HOME/.ssh/my-key.key            \
@@ -178,4 +189,4 @@ help:
 	$(info $(HELP_TEXT))
 	@:
 
-.PHONY: all clean help
+.PHONY: all clean help build
