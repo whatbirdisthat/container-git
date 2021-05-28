@@ -26,6 +26,7 @@ RUN chown -R ${LOGIN} /home/${LOGIN}
 
 USER ${LOGIN}
 
+RUN git config --global init.defaultBranch 'main'
 RUN git config --global user.name "${GIT_USERNAME}"
 RUN git config --global user.email "${GIT_EMAIL}"
 RUN git config --global credential.helper 'read-only'
