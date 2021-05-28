@@ -37,7 +37,7 @@ check:
 check-build-base-image:
 	@{                                                                           \
 	docker images | grep -q '$(base_image)' && exit 0 ;                          \
-	docker pull archlinux/base:latest | grep -vq '$(OS_UPDATED)' || exit 0 ;     \
+	docker pull archlinux | grep -vq '$(OS_UPDATED)' || exit 0 ;     \
 	echo "Building BASE image '$(base_image)'";                                  \
 	cd imagedefs/base &&                                                         \
 	docker build                                                                 \

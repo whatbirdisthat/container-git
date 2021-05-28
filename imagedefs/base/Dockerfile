@@ -1,4 +1,4 @@
-FROM archlinux/base:latest
+FROM archlinux
 #RUN pacman --noconfirm -Syu git-doc git-bash-completion 
 RUN pacman --noconfirm -Syu bash bash-completion less tree git openssh dnsutils coreutils gawk sed grep
 
